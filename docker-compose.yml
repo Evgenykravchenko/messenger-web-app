@@ -3,13 +3,15 @@ services:
     image: mongo:6.0
     container_name: mongo_db
     restart: unless-stopped
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ADMIN_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ADMIN_PASSWORD}
+      MONGO_INITDB_REPLICA_SET_NAME: rs0
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+      - ./mongo-entrypoint.sh:/usr/local/bin/mongo-entrypoint.sh:ro
+    entrypoint: ["/usr/local/bin/mongo-entrypoint.sh"]
 
   mongo-express:
     image: mongo-express:1.0
@@ -18,9 +20,7 @@ services:
     depends_on:
       - mongo
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_ADMIN_USERNAME}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_ADMIN_PASSWORD}
-      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_URL: "mongodb://mongo:27017/messenger?replicaSet=rs0"
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGODB_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGODB_PASSWORD}
     ports:
